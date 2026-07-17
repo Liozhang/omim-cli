@@ -5,12 +5,26 @@
 
 ---
 
-# OMIM - Online Mendelian Inheritance in Man
+# omim-cli — client for OMIM (Online Mendelian Inheritance in Man)
 
 ## Installation
 ```bash
-python3 -m pip install -U omim-cli
+pip install -U omim-cli
 ```
+Requires Python ≥ 3.8.
+
+> **First-time setup — the package ships no data.** OMIM data is copyrighted
+> by Johns Hopkins University, so each user downloads their own copy with their
+> own free API key (register at <https://omim.org/downloads>):
+> ```bash
+> omim-cli api config --set-key YOUR_KEY   # save your key once
+> omim-cli download                        # fetch the 4 official text files
+> omim-cli update                          # build the local SQLite database
+> omim-cli stats                           # verify (~29k entries)
+> ```
+> Append `--with-api` to `update` to also fetch text sections, clinical
+> synopsis and allelic variants via the API. Set the database location with
+> `--dbfile` or the `OMIM_DB` env var. See **Basic Usage** below.
 
 ---
 
@@ -40,16 +54,8 @@ Commands:
 > **v2.0 — legal data sources.** The HTML scraper has been removed. Data is
 > obtained exclusively from the **official OMIM API** and the **official
 > text-file downloads** (`mim2gene.txt`, `mimTitles.txt`, `genemap2.txt`,
-> `morbidmap.txt`). You need a free OMIM API key (which also serves as the
-> download token) — register at <https://omim.org/downloads>.
->
-> ```bash
-> omim-cli api config --set-key YOUR_KEY   # save your key once
-> omim-cli download                        # fetch the 4 text files
-> omim-cli update                          # build the local SQLite database
-> omim-cli update --with-api               # also fetch text sections, clinical
->                                      # synopsis and allelic variants via API
-> ```
+> `morbidmap.txt`). The same free OMIM API key doubles as the download token
+> (register at <https://omim.org/downloads>); see **Installation** for setup.
 
 ### 1. stats
 > OMIM Entry Statistics
