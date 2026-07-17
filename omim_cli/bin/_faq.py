@@ -1,7 +1,7 @@
 import click
 import prettytable
 
-import omim
+import omim_cli
 
 
 @click.command(name='faq', help=click.style('explains of some faq', fg='green'))

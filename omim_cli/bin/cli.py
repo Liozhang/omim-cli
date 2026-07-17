@@ -3,8 +3,8 @@ import os
 import click
 from simple_loggers import SimpleLogger
 
-from omim import version_info, DEFAULT_DB, DEFAULT_URL
-from omim.db import Manager
+from omim_cli import version_info, DEFAULT_DB, DEFAULT_URL
+from omim_cli.db import Manager
 
 from ._update import main as update_cli
 from ._download import main as download_cli
@@ -17,7 +17,7 @@ from ._api import api_cli
 CONTEXT_SETTINGS = dict(help_option_names=['-?', '-h', '--help'])
 
 
-@click.group(name='omim', no_args_is_help=True,
+@click.group(name='omim-cli', no_args_is_help=True,
              context_settings=CONTEXT_SETTINGS,
              help=click.style(version_info['desc'], fg='green', bold=True))
 @click.option('-d', '--dbfile',

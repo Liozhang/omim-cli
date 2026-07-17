@@ -9,7 +9,7 @@ import re
 
 from dateutil import parser as date_parser
 
-from omim import PARSER_VERSION
+from omim_cli import PARSER_VERSION
 
 
 # Inheritance abbreviation map (API/text files spell these out; legacy DB

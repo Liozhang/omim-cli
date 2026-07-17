@@ -1,7 +1,7 @@
 import prettytable
 
-from omim import MIM_TYPES
-from omim.db import OMIM_DATA_COLUMNS, OMIM_DATA
+from omim_cli import MIM_TYPES
+from omim_cli.db import OMIM_DATA_COLUMNS, OMIM_DATA
 
 
 def get_columns_table():

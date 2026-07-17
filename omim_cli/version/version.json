@@ -1,0 +1,7 @@
+{
+    "desc": "omim-cli - client for OMIM (Online Mendelian Inheritance in Man) via the official API + downloads",
+    "prog": "omim-cli",
+    "author": "Liozhang",
+    "author_email": "noreply@example.com",
+    "version": "2.1.0"
+}

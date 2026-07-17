@@ -1,7 +1,7 @@
-![PyPI - Version](https://img.shields.io/pypi/v/omim)
-![PyPI - Status](https://img.shields.io/pypi/status/omim)
-![Pepy Total Downlods](https://img.shields.io/pepy/dt/omim)
-![PyPI - License](https://img.shields.io/pypi/l/omim)
+![PyPI - Version](https://img.shields.io/pypi/v/omim-cli)
+![PyPI - Status](https://img.shields.io/pypi/status/omim-cli)
+![Pepy Total Downlods](https://img.shields.io/pepy/dt/omim-cli)
+![PyPI - License](https://img.shields.io/pypi/l/omim-cli)
 
 ---
 
@@ -9,21 +9,21 @@
 
 ## Installation
 ```bash
-python3 -m pip install -U omim
+python3 -m pip install -U omim-cli
 ```
 
 ---
 
 ## Basic Usage
 ### main
-`omim -h`
+`omim-cli -h`
 ```
-Usage: omim [OPTIONS] COMMAND [ARGS]...
+Usage: omim-cli [OPTIONS] COMMAND [ARGS]...
 
-  OMIM - Online Mendelian Inheritance in Man
+  omim-cli - client for OMIM (Online Mendelian Inheritance in Man)
 
 Options:
-  -d, --dbfile TEXT  the path of database file  [default:/usr/local/lib/python3.8/site-packages/omim/data/omim.sqlite3]
+  -d, --dbfile TEXT  the path of database file  [default: ~/omim_data/omim.sqlite3]
   -u, --url TEXT     the base url of omim  [default: https://omim.org]
   --version          Show the version and exit.
   -?, -h, --help     Show this message and exit.
@@ -44,17 +44,17 @@ Commands:
 > download token) — register at <https://omim.org/downloads>.
 >
 > ```bash
-> omim api config --set-key YOUR_KEY   # save your key once
-> omim download                        # fetch the 4 text files
-> omim update                          # build the local SQLite database
-> omim update --with-api               # also fetch text sections, clinical
+> omim-cli api config --set-key YOUR_KEY   # save your key once
+> omim-cli download                        # fetch the 4 text files
+> omim-cli update                          # build the local SQLite database
+> omim-cli update --with-api               # also fetch text sections, clinical
 >                                      # synopsis and allelic variants via API
 > ```
 
 ### 1. stats
 > OMIM Entry Statistics
 
-`omim stats`
+`omim-cli stats`
 ```
 ***** updated time: 2026-07-17 *****
 +--------------------------+-------+
@@ -74,24 +74,24 @@ Commands:
 > Re-running only re-downloads files whose `# Generated:` date changed.
 
 ```
-omim download                    # all 4 files, into the current directory
-omim download -o ./data          # into ./data
-omim download genemap2 morbidmap # only specific files
-omim download --force            # re-download even if up to date
+omim-cli download                    # all 4 files, into the current directory
+omim-cli download -o ./data          # into ./data
+omim-cli download genemap2 morbidmap # only specific files
+omim-cli download --force            # re-download even if up to date
 ```
 
 ### 3. update
 > build / refresh the local SQLite database from the downloaded text files.
 
 ```
-omim update                      # import text files only (fast, no API calls)
-omim update --with-api           # also fetch text sections, clinical synopsis
+omim-cli update                      # import text files only (fast, no API calls)
+omim-cli update --with-api           # also fetch text sections, clinical synopsis
                                  # and allelic variants via the API (slower)
-omim update --with-api --refresh # probe entry dates via API and re-fetch only
+omim-cli update --with-api --refresh # probe entry dates via API and re-fetch only
                                  # entries OMIM has updated (lightweight detection)
-omim update --force              # re-import everything
-omim update -d ./data            # use text files in ./data
-omim update -t gene -t phenotype # restrict to given mim types
+omim-cli update --force              # re-import everything
+omim-cli update -d ./data            # use text files in ./data
+omim-cli update -t gene -t phenotype # restrict to given mim types
 ```
 
 > **Default mode imports only structured data** (`prefix`, `title`, `geneMap`,
@@ -99,7 +99,7 @@ omim update -t gene -t phenotype # restrict to given mim types
 > (`text_sections`, `clinical_synopsis`, `allelic variants`, `references`) are
 > populated only with `--with-api`, because the text files do not carry them.
 >
-> **Incremental — no wasted work.** Re-running `omim update` is a no-op when
+> **Incremental — no wasted work.** Re-running `omim-cli update` is a no-op when
 > nothing changed: it compares the text files' `# Generated:` date and the
 > parser version against the database, and skips the import entirely if current
 > (use `--force` to re-import). `--with-api` only queries entries that have not
@@ -116,7 +116,7 @@ omim update -t gene -t phenotype # restrict to given mim types
 ### 4. faq
 > explains of some FAQ
 
-`omim faq`
+`omim-cli faq`
 ```
 ***** Explains of MIM PREFIX *****
 +--------+---------------------------------------------------------+
@@ -146,9 +146,9 @@ omim update -t gene -t phenotype # restrict to given mim types
 ```
 
 ### 5. query
-`omim query -h`
+`omim-cli query -h`
 ```
-Usage: omim query [OPTIONS]
+Usage: omim-cli query [OPTIONS]
 
   query something from database
 
@@ -166,7 +166,7 @@ Options:
 
 - show all available keys
 
-`omim query -K` 
+`omim-cli query -K` 
 ```
 +----------------------+------------------------------------------+--------------+
 | Key                  | Comment                                  | Type         |
@@ -186,12 +186,25 @@ Options:
 | clinical_synopsis    | Clinical synopsis with ontology IDs      | TEXT         |
 | phenotypic_series    | Phenotypic series MIM numbers            | TEXT         |
 | parser_version       | Parser version                           | VARCHAR(10)  |
+| status               | Entry status (live/moved/removed)        | VARCHAR(20)  |
+| moved_to             | Target MIM if moved                      | VARCHAR(20)  |
+| external_links       | External DB cross-references (JSON)      | TEXT         |
+| gene_record          | Full gene-map record (JSON)              | TEXT         |
+| see_also             | See-also references (JSON)               | TEXT         |
+| contributors         | Contributors                             | TEXT         |
+| edit_history         | Edit history                             | TEXT         |
+| date_created         | Entry creation date                      | DATETIME     |
+| date_updated         | Entry last update date                   | DATETIME     |
 +----------------------+------------------------------------------+--------------+
 ```
 
+> Run `omim-cli query -K` to see the columns of your local database (the
+> `omim_allelic_variants` table holds allelic variants, queried via
+> `manager.get_variants(mim)`).
+
 - search with a key
 
-`omim query -s hgnc_gene_symbol BMPR2`
+`omim-cli query -s hgnc_gene_symbol BMPR2`
 
 <details>
 
@@ -206,7 +219,7 @@ None	16429403, 10051328, 17425602, 18548003, 10903931, 21920918, 12571257, 32911
 
 - search with a key and output as json
 
-`omim query -s hgnc_gene_symbol BMPR2 -F json -C`
+`omim-cli query -s hgnc_gene_symbol BMPR2 -F json -C`
 
 <details>
 
@@ -254,7 +267,7 @@ None	16429403, 10051328, 17425602, 18548003, 10903931, 21920918, 12571257, 32911
 
 - fuzzy search
 
-`omim query -s geneMap '%Pulmonary hypertension%' --fuzzy -F json -C`
+`omim-cli query -s geneMap '%Pulmonary hypertension%' --fuzzy -F json -C`
 
 <details>
 
@@ -456,19 +469,19 @@ None	16429403, 10051328, 17425602, 18548003, 10903931, 21920918, 12571257, 32911
 
 ```bash
 # manage your key (stored at ~/.omim_api_key; or set OMIM_API_KEY env var)
-omim api config --set-key YOUR_KEY
-omim api config --show
-omim api config --clear
+omim-cli api config --set-key YOUR_KEY
+omim-cli api config --show
+omim-cli api config --clear
 
-omim api status                                  # check API status
-omim api entry --mim 100100                      # fetch an entry
-omim api entry --mim 603903 --include clinicalSynopsis geneMap
-omim api search -q "Marfan syndrome" --limit 20  # text search
-omim api gene-map --mim 602421                   # gene map data (use a gene MIM)
-omim api clinical-synopsis --mim 219700          # clinical synopsis
-omim api allelic-variants --mim 602421           # allelic variants (use a gene MIM)
-omim api references --mim 219700                 # reference list
-omim api batch --file mim_list.txt -o out.json   # batch query to file
+omim-cli api status                                  # check API status
+omim-cli api entry --mim 100100                      # fetch an entry
+omim-cli api entry --mim 603903 --include clinicalSynopsis geneMap
+omim-cli api search -q "Marfan syndrome" --limit 20  # text search
+omim-cli api gene-map --mim 602421                   # gene map data (use a gene MIM)
+omim-cli api clinical-synopsis --mim 219700          # clinical synopsis
+omim-cli api allelic-variants --mim 602421           # allelic variants (use a gene MIM)
+omim-cli api references --mim 219700                 # reference list
+omim-cli api batch --file mim_list.txt -o out.json   # batch query to file
 ```
 
 > Add `--raw` to any `api` subcommand for the full JSON response. The API caps
@@ -477,13 +490,13 @@ omim api batch --file mim_list.txt -o out.json   # batch query to file
 
 ---
 
-## Use omim in Python
+## Use omim-cli in Python
 ```python
-import omim
-from omim import util
-from omim.db import Manager, OMIM_DATA, OMIM_ALLELIC_VARIANT
+import omim_cli
+from omim_cli import util
+from omim_cli.db import Manager, OMIM_DATA, OMIM_ALLELIC_VARIANT
 
-manager = Manager(dbfile=omim.DEFAULT_DB)
+manager = Manager(dbfile=omim_cli.DEFAULT_DB)
 
 # show columns
 print(util.get_columns_table())
@@ -510,7 +523,7 @@ items = res.all()
 print(item.mim_number, item.title)
 print(item.as_dict)
 
-# --- v2.0: deep fields (populated by `omim update --with-api`) ---
+# --- v2.0: deep fields (populated by `omim-cli update --with-api`) ---
 import json
 
 # text sections: API section names -> text content
@@ -531,8 +544,8 @@ for v in variants[:3]:
 
 ## Query the OMIM API directly
 ```python
-from omim.core.api import APIClient
-from omim.core.parser_v2 import api_to_model
+from omim_cli.core.api import APIClient
+from omim_cli.core.parser_v2 import api_to_model
 
 # key from: argument > OMIM_API_KEY env var > ~/.omim_api_key
 api = APIClient()
@@ -555,7 +568,7 @@ data is governed by the [OMIM User Agreement](https://omim.org/help/agreement).
 
 - This package is a **client tool only** — it does **not** bundle or redistribute
   any OMIM data. Each user must obtain their own (free) API access and download
-  the data themselves with `omim download`.
+  the data themselves with `omim-cli download`.
 - The API key is a personal, non-transferable credential. Never commit it to
   version control (the key and downloaded files are gitignored).
 - This project is intended for academic research, education, and personal use.
@@ -572,10 +585,10 @@ respect of the [OMIM API terms](https://www.omim.org/help/api):
 - **Honors documented limits.** Entry requests are capped at 20 `mimNumber`s when
   an `include` is set, gene-map at 100; the tool enforces/batches these for you.
 - **Polite pacing.** A short delay sits between every API request; bulk
-  enrichment (`omim update --with-api`) is sequential (single-threaded) and
+  enrichment (`omim-cli update --with-api`) is sequential (single-threaded) and
   skips entries it has already fetched, so it does not re-burn your quota.
 - **Quota-aware.** If OMIM returns `429` (quota/rate limit), the tool backs off
   and retries once, then stops with a clear message instead of hammering.
-- **Be mindful of your daily quota.** `omim update --with-api` over the full
+- **Be mindful of your daily quota.** `omim-cli update --with-api` over the full
   database is ~1,500 API calls; run it in chunks or only for the entries you
   need (`-t gene`, specific MIMs via the Python API) if your quota is limited.

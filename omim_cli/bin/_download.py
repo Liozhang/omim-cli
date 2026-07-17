@@ -1,7 +1,7 @@
 import click
 
-from omim.core.downloads import OmimDownloads, FILES
-from omim.core.api import ApiKeyError
+from omim_cli.core.downloads import OmimDownloads, FILES
+from omim_cli.core.api import ApiKeyError
 
 
 __epilog__ = click.style('''

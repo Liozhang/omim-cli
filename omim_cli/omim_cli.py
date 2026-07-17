@@ -21,7 +21,7 @@ new CLI.
 """
 import sys
 
-from omim.bin.cli import main
+from omim_cli.bin.cli import main
 
 
 if __name__ == '__main__':

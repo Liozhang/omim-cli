@@ -2,7 +2,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.state import InstanceState
 
-from omim.db.model import Base, OMIM_ALLELIC_VARIANT
+from omim_cli.db.model import Base, OMIM_ALLELIC_VARIANT
 
 from simple_loggers import SimpleLogger
 

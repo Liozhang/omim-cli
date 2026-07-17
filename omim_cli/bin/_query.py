@@ -5,8 +5,8 @@ import datetime
 import click
 from pygments import highlight, lexers, formatters
 
-from omim import util
-from omim.db import OMIM_DATA
+from omim_cli import util
+from omim_cli.db import OMIM_DATA
 
 
 __epilog__ = click.style('''

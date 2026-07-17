@@ -12,9 +12,9 @@ import json
 
 import click
 
-from omim.core.api import (APIClient, ApiError, ApiKeyError, CONFIG_FILE,
+from omim_cli.core.api import (APIClient, ApiError, ApiKeyError, CONFIG_FILE,
                            ENV_VAR_KEY, ENTRY_BATCH_WITH_INCLUDE)
-from omim.core.parser_v2 import api_to_model
+from omim_cli.core.parser_v2 import api_to_model
 
 
 # documented entry include options

@@ -22,8 +22,8 @@ from pathlib import Path
 import requests
 from simple_loggers import SimpleLogger
 
-from omim.core.api import load_api_key
-from omim.core.parser_v2 import abbreviate_inheritance
+from omim_cli.core.api import load_api_key
+from omim_cli.core.parser_v2 import abbreviate_inheritance
 
 
 DOWNLOAD_BASE = 'https://data.omim.org/downloads'

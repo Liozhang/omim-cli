@@ -1,6 +1,6 @@
 import click
 
-from omim import util
+from omim_cli import util
 
 
 @click.command(name='stats', help=click.style('statistics of the database', fg='green'))

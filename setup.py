@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-version_info = json.load(open(os.path.join(BASE_DIR, 'omim', 'version', 'version.json')))
+version_info = json.load(open(os.path.join(BASE_DIR, 'omim_cli', 'version', 'version.json')))
 
 
 setup(
@@ -16,17 +16,17 @@ setup(
     description=version_info['desc'],
     long_description=codecs.open(os.path.join(BASE_DIR, 'README.md'), encoding='utf-8').read(),
     long_description_content_type="text/markdown",
-    url='https://github.com/suqingdong/omim',
+    url='https://github.com/Liozhang/omim-cli',
     project_urls={
-        'Documentation': 'https://omim.readthedocs.io',
-        'Tracker': 'https://github.com/suqingdong/omim/issues',
+        'Documentation': 'https://github.com/Liozhang/omim-cli',
+        'Tracker': 'https://github.com/Liozhang/omim-cli/issues',
     },
     license='BSD License',
     install_requires=codecs.open(os.path.join(BASE_DIR, 'requirements.txt'), encoding='utf-8').read().split('\n'),
     packages=find_packages(),
     include_package_data=True,
     entry_points={'console_scripts': [
-        'omim = omim.bin.cli:main',
+        'omim-cli = omim_cli.bin.cli:main',
     ]},
     classifiers=[
         'Development Status :: 5 - Production/Stable',

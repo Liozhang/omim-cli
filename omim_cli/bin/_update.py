@@ -4,12 +4,12 @@ import datetime
 
 import click
 
-from omim import MIM_TYPES, PARSER_VERSION
-from omim.db import OMIM_DATA
-from omim.core import OMIM
-from omim.core.downloads import OmimDownloads
-from omim.core.api import APIClient, ApiError, ApiKeyError
-from omim.core.parser_v2 import api_to_model
+from omim_cli import MIM_TYPES, PARSER_VERSION
+from omim_cli.db import OMIM_DATA
+from omim_cli.core import OMIM
+from omim_cli.core.downloads import OmimDownloads
+from omim_cli.core.api import APIClient, ApiError, ApiKeyError
+from omim_cli.core.parser_v2 import api_to_model
 
 
 __epilog__ = click.style('''
