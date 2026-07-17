@@ -1,7 +1,10 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/omim-cli)
+![PyPI - Python](https://img.shields.io/pypi/pyversions/omim-cli)
 ![PyPI - Status](https://img.shields.io/pypi/status/omim-cli)
-![Pepy Total Downlods](https://img.shields.io/pepy/dt/omim-cli)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/omim-cli)
 ![PyPI - License](https://img.shields.io/pypi/l/omim-cli)
+![GitHub last commit](https://img.shields.io/github/last-commit/Liozhang/omim-cli)
+![GitHub](https://img.shields.io/github/license/Liozhang/omim-cli)
 
 ---
 
