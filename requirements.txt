@@ -1,0 +1,8 @@
+click
+pygments
+requests
+webrequests
+prettytable
+simple-loggers
+python-dateutil
+sqlalchemy

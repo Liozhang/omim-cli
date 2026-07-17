@@ -1,0 +1,6 @@
+include requirements.txt
+include omim/version/version.json
+# NOTE: do NOT ship omim/data/*.sqlite3. OMIM data is copyrighted by Johns
+# Hopkins University and must not be redistributed. Users build their own
+# local database with `omim download` + `omim update`.
+recursive-exclude omim/data *.sqlite3
