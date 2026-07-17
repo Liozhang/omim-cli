@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omim-cli"
+description = "Client for OMIM (Online Mendelian Inheritance in Man) via the official API + downloads"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "BSD"}
+authors = [{name = "Liozhang"}]
+keywords = ["omim", "genetics", "bioinformatics", "mendelian"]
+dynamic = ["version"]
+dependencies = [
+    "click",
+    "pygments",
+    "requests",
+    "prettytable",
+    "simple-loggers",
+    "python-dateutil",
+    "sqlalchemy",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/Liozhang/omim-cli"
+Documentation = "https://github.com/Liozhang/omim-cli"
+Tracker = "https://github.com/Liozhang/omim-cli/issues"
+
+[project.scripts]
+omim-cli = "omim_cli.bin.cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "omim_cli.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["omim_cli*"]
+
+[tool.setuptools.package-data]
+omim_cli = ["version/version.json"]
