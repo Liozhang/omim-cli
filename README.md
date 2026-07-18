@@ -571,8 +571,12 @@ resp = api.search('Marfan syndrome', limit=5)      # SOLR search
 ---
 
 ## Data & license
-OMIM® and its data are copyrighted by The Johns Hopkins University. Use of OMIM
-data is governed by the [OMIM User Agreement](https://omim.org/help/agreement).
+**Code:** MIT License — see [`LICENSE`](LICENSE). Copyright © 2026 suqingdong
+(original `omim` package) and Liozhang (`omim-cli` fork).
+
+**OMIM data:** OMIM® and its data are copyrighted by The Johns Hopkins
+University. Use of OMIM data is governed by the
+[OMIM User Agreement](https://omim.org/help/agreement).
 
 - This package is a **client tool only** — it does **not** bundle or redistribute
   any OMIM data. Each user must obtain their own (free) API access and download
@@ -581,6 +585,13 @@ data is governed by the [OMIM User Agreement](https://omim.org/help/agreement).
   version control (the key and downloaded files are gitignored).
 - This project is intended for academic research, education, and personal use.
   It is not intended for commercial use.
+
+## Default file locations
+| Artifact | Default location | Override |
+|----------|------------------|----------|
+| Downloaded text files (`mim2gene.txt`, …) | current directory (`.`) | `omim-cli download -o <dir>` |
+| SQLite database | `~/omim_data/omim.sqlite3` | `--dbfile <path>` or `OMIM_DB` env var |
+| API key | `~/.omim_api_key` | `OMIM_API_KEY` env var, or `omim-cli api config` |
 
 ## Responsible use — respect the OMIM API rules
 This tool is built to obtain OMIM data **legally and courteously**, in full
