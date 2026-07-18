@@ -8,7 +8,7 @@ from omim_cli import MIM_TYPES, PARSER_VERSION
 from omim_cli.db import OMIM_DATA
 from omim_cli.core import OMIM
 from omim_cli.core.downloads import OmimDownloads
-from omim_cli.core.api import APIClient, ApiError, ApiKeyError
+from omim_cli.core.api import APIClient, ApiError, ApiKeyError, QuotaExhausted
 from omim_cli.core.parser_v2 import api_to_model
 
 
@@ -229,11 +229,16 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                     f'(include=dates, {BATCH}/batch) ...', fg='cyan')
         changed = []
         probed = 0
+        probe_aborted = False
         with manager:
             for i in range(0, len(mims), BATCH):
                 batch = mims[i:i + BATCH]
                 try:
                     entries = api.get_entries(batch, include='dates')
+                except QuotaExhausted as exc:
+                    logger.error(f'API quota exhausted during date probe; stopping. {exc}')
+                    probe_aborted = True
+                    break
                 except ApiError as exc:
                     logger.error(f'date probe failed ({batch[0]}..): {exc}')
                     continue
@@ -249,6 +254,11 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                 if probed % 1000 < BATCH:
                     click.secho(f'  ... probed {probed}/{len(mims)}, '
                                 f'changed so far: {len(changed)}', fg='cyan')
+        if probe_aborted:
+            click.secho(f'*** refresh aborted: API quota exhausted after probing '
+                        f'{probed}/{len(mims)} entries. Re-run later to resume.',
+                        fg='yellow')
+            return
         click.secho(f'*** refresh: {len(changed)} of {len(mims)} entries '
                     f'need updating', fg='yellow')
 
@@ -259,11 +269,16 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
         click.secho(f'refresh: fetching full data for {len(changed)} changed entries ...',
                     fg='cyan')
         updated = 0
+        refetch_aborted = False
         with manager:
             for i in range(0, len(changed), BATCH):
                 batch = changed[i:i + BATCH]
                 try:
                     entries = api.get_entries(batch, include='all')
+                except QuotaExhausted as exc:
+                    logger.error(f'API quota exhausted during refetch; stopping. {exc}')
+                    refetch_aborted = True
+                    break
                 except ApiError as exc:
                     logger.error(f'refetch failed ({batch[0]}..): {exc}')
                     continue
@@ -272,7 +287,12 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                         updated += 1
                 manager.session.commit()
                 click.secho(f'  ... refreshed {i + len(batch)}/{len(changed)}', fg='cyan')
-        click.secho(f'*** refresh complete: {updated} entries updated', fg='green')
+        if refetch_aborted:
+            click.secho(f'*** refresh stopped early: {updated} of {len(changed)} '
+                        f'updated before quota exhausted. Re-run later to resume.',
+                        fg='yellow')
+        else:
+            click.secho(f'*** refresh complete: {updated} entries updated', fg='green')
         return
 
     # ------------------------------------------------------------------
@@ -281,6 +301,9 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
     logger.info('enriching deep content via API ...')
     enriched = 0
     skipped = 0
+    aborted = False
+    consecutive_err = 0
+    MAX_CONSEC_ERR = 5
     with manager:
         for i in range(0, len(mims), BATCH):
             batch = mims[i:i + BATCH]
@@ -298,9 +321,19 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                 continue
             try:
                 entries = api.get_entries(todo, include='all')
+            except QuotaExhausted as exc:
+                logger.error(f'API quota exhausted; stopping enrichment. {exc}')
+                aborted = True
+                break
             except ApiError as exc:
+                consecutive_err += 1
                 logger.error(f'API batch failed ({todo[0]}..): {exc}')
+                if consecutive_err >= MAX_CONSEC_ERR:
+                    logger.error(f'{MAX_CONSEC_ERR} consecutive failures; stopping.')
+                    aborted = True
+                    break
                 continue
+            consecutive_err = 0
             for entry in entries:
                 if apply_entry(entry):
                     enriched += 1
@@ -308,8 +341,14 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
             click.secho(f'  ... enriched through {i + len(batch)}/{len(mims)} '
                         f'(api:{enriched}, skipped:{skipped})', fg='cyan')
 
-    click.secho(f'*** API enrichment done: {enriched} enriched, {skipped} skipped',
-                fg='green')
+    if aborted:
+        click.secho(f'*** enrichment stopped early after {enriched} entries '
+                    f'(quota/error). Fetched entries are committed; re-run '
+                    f'later to resume (already-enriched ones are skipped).',
+                    fg='yellow')
+    else:
+        click.secho(f'*** API enrichment done: {enriched} enriched, {skipped} skipped',
+                    fg='green')
 
 
 if __name__ == '__main__':

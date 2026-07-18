@@ -36,6 +36,14 @@ class ApiError(Exception):
     """Raised on unrecoverable API errors."""
 
 
+class QuotaExhausted(ApiError):
+    """Daily API quota / persistent rate limit reached.
+
+    Raised when a 429 persists past the single retry — the caller should stop
+    the whole bulk run (not just skip the batch) and resume later.
+    """
+
+
 def load_api_key(explicit=None):
     """Resolve the API key from argument > env var > config file."""
     if explicit:
@@ -101,9 +109,9 @@ class APIClient(object):
             resp = self.session.get(url, params=params, timeout=self.timeout)
 
         if resp.status_code == 429:
-            raise ApiError(
-                'OMIM API quota exhausted (429) even after retry. Stop and '
-                'resume later; review OMIM API usage limits.'
+            raise QuotaExhausted(
+                'OMIM API quota exhausted (429) even after retry. Stop the '
+                'bulk run and resume later; review OMIM API usage limits.'
             )
         elif resp.status_code in (401, 403):
             raise ApiError(
