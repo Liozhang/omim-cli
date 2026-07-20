@@ -571,8 +571,7 @@ resp = api.search('Marfan syndrome', limit=5)      # SOLR search
 ---
 
 ## Data & license
-**Code:** MIT License — see [`LICENSE`](LICENSE). Copyright © 2026 suqingdong
-(original `omim` package) and Liozhang (`omim-cli` fork).
+**Code:** MIT License — see [`LICENSE`](LICENSE). Liozhang.
 
 **OMIM data:** OMIM® and its data are copyrighted by The Johns Hopkins
 University. Use of OMIM data is governed by the
