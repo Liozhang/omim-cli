@@ -22,14 +22,14 @@ _INH_TOKENS = {
     'X-linked': 'XL',
     'Y-linked': 'YLD',
     'Mitochondrial': 'Mi',
-    'Pseudoautosomal dominant': 'Pseudoautosomal dominant',
-    'Pseudoautosomal recessive': 'Pseudoautosomal recessive',
-    'Somatic mutation': 'Somatic mutation',
-    'Somatic mosaicism': 'Somatic mosaicism',
-    'Multifactorial': 'Multifactorial',
-    'Isolated cases': 'Isolated cases',
-    'Digenic dominant': 'Digenic dominant',
-    'Digenic recessive': 'Digenic recessive',
+    'Pseudoautosomal dominant': 'PD',
+    'Pseudoautosomal recessive': 'PR',
+    'Somatic mutation': 'SMu',
+    'Somatic mosaicism': 'SMo',
+    'Multifactorial': 'Mu',
+    'Isolated cases': 'IC',
+    'Digenic dominant': 'DD',
+    'Digenic recessive': 'DR',
 }
 
 

@@ -12,6 +12,7 @@ The same key is also used as the download token for the official text files
 (mimTitles.txt / genemap2.txt / morbidmap.txt) hosted under
 ``data.omim.org/downloads/{KEY}/``.
 """
+import json
 import os
 import time
 from pathlib import Path
@@ -77,7 +78,7 @@ class APIClient(object):
         self.session.headers.update({
             'ApiKey': self.api_key,
             'Accept-Encoding': 'gzip',
-            'User-Agent': 'omim-py/2.0 (https://github.com/suqingdong/omim)',
+            'User-Agent': 'omim-cli/2.1 (https://github.com/Liozhang/omim-cli)',
         })
 
     # ------------------------------------------------------------------
@@ -135,7 +136,15 @@ class APIClient(object):
 
         if self.delay:
             time.sleep(self.delay)
-        return resp.json()
+        try:
+            return resp.json()
+        except json.JSONDecodeError:
+            body_preview = (resp.text or '')[:200]
+            raise ApiError(
+                f'OMIM returned non-JSON response (HTTP {resp.status_code}). '
+                f'This may indicate a CAPTCHA or access block. '
+                f'Open the URL in a browser: {url}'
+            )
 
     @staticmethod
     def _hint_for_body(resp):

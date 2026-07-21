@@ -194,11 +194,13 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                       'date_created', 'date_updated'):
             if api_data.get(field) is not None:
                 setattr(existing, field, api_data[field])
-        # external_links doubles as the "enriched" marker: always set it
-        setattr(existing, 'external_links', api_data.get('external_links') or '{}')
+        # external_links: only write when the API actually returned data.
+        # None means "not yet enriched / no external links"; '{}' would
+        # incorrectly mark the entry as enriched on the next --with-api run.
+        if api_data.get('external_links') is not None:
+            setattr(existing, 'external_links', api_data['external_links'])
         variants = api_data.get('allelic_variants')
         if variants:
-            manager.session.commit()
             manager.insert_variants(mim, variants)
         return mim
 
@@ -213,7 +215,8 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                 return None
             try:
                 return _dateparse.parse(str(v)).strftime('%Y-%m-%d')
-            except Exception:
+            except (ValueError, TypeError, OverflowError) as exc:
+                logger.warning(f'cannot parse date from API: {v!r} ({exc})')
                 return None
 
         def _norm_from_epoch(epoch):
@@ -222,7 +225,8 @@ def main(ctx, api_key, with_api, refresh, force, data_dir, mim_types):
                 return None
             try:
                 return _dt.datetime.fromtimestamp(int(epoch)).strftime('%Y-%m-%d')
-            except Exception:
+            except (ValueError, TypeError, OSError, OverflowError) as exc:
+                logger.warning(f'cannot parse epoch timestamp from API: {epoch!r} ({exc})')
                 return None
 
         click.secho(f'refresh: probing dates for {len(mims)} entries '

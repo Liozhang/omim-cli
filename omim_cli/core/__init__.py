@@ -23,7 +23,8 @@ class OMIM(object):
         (use ``omim-cli download`` to fetch it).
         """
         self.logger.debug(f'parsing mim2gene from file: {mim2gene} ...')
-        text = open(mim2gene).read().strip()
+        with open(mim2gene, encoding='utf-8') as f:
+            text = f.read().strip()
 
         fields = 'mim_number mim_type entrez_gene_id hgnc_gene_symbol ensembl_gene_id'.split()
         generated = None

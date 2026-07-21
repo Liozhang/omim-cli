@@ -16,14 +16,17 @@ def get_columns_table():
 def get_stats_table(manager):
     with manager:
         query = manager.query(OMIM_DATA)
-        generated = query.order_by(OMIM_DATA.generated.desc()).first().generated.strftime('%Y-%m-%d')
+        first_row = query.order_by(OMIM_DATA.generated.desc()).first()
+        generated = (first_row.generated.strftime('%Y-%m-%d')
+                     if first_row and first_row.generated else 'N/A')
 
         total = 0
         table = prettytable.PrettyTable(['MIM_TYPE', 'COUNT'])
         for mim_type in MIM_TYPES:
             res = manager.query(OMIM_DATA, 'mim_type', mim_type)
-            table.add_row([mim_type, res.count()])
-            total += res.count()
+            count = res.count() if res else 0
+            table.add_row([mim_type, count])
+            total += count
 
         table.add_row(['TOTAL COUNT', total])
         table.align['MIM_TYPE'] = 'l'

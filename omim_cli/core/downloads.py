@@ -98,7 +98,8 @@ class OmimDownloads(object):
         try:
             with open(path, encoding='utf-8') as f:
                 return self._generated_from_text(f)
-        except Exception:
+        except (UnicodeDecodeError, OSError) as exc:
+            self.logger.warning(f'cannot read local {name}: {exc}')
             return None
 
     def remote_generated(self, name):
@@ -203,8 +204,13 @@ class OmimDownloads(object):
                 if not line.strip() or line.startswith('#'):
                     continue
                 parts = line.rstrip('\n').split('\t')
-                # pad short rows
-                parts += [''] * (13 - len(parts))
+                # pad short rows; warn if the line is unusually short
+                # (genemap2 has 14 tab-separated columns)
+                if len(parts) < 13:
+                    self.logger.warning(
+                        f'genemap2 line has only {len(parts)} columns (expected 14): '
+                        f'{line[:80]}')
+                parts += [''] * max(0, 13 - len(parts))
                 (chrom, _start, _end, cyto, comp_cyto, mim, gene_symbols,
                  gene_name, approved, entrez, ensembl, _comments, phenotypes) = parts[:13]
                 mouse = parts[13].strip() if len(parts) > 13 else ''

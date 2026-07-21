@@ -35,11 +35,10 @@ examples:
 def main(ctx, **kwargs):
     logger = ctx.obj['logger']
     manager = ctx.obj['manager']
-    
+
     limit = kwargs['limit']
     search = kwargs['search']
     fuzzy = kwargs['fuzzy']
-    out = open(kwargs['outfile'], 'w') if kwargs['outfile'] else sys.stdout
 
     logger.debug(f'input arguments: {kwargs}')
 
@@ -52,36 +51,44 @@ def main(ctx, **kwargs):
         logger.warning('please query something with -s/--search argument')
         exit(1)
 
-    with manager:
-        query = manager.session.query(OMIM_DATA)
+    out = None
+    try:
+        if kwargs['outfile']:
+            out = open(kwargs['outfile'], 'w', encoding='utf-8')
+        else:
+            out = sys.stdout
 
-        for key, value in search:
-            if key not in OMIM_DATA.__dict__:
-                logger.error(f'invalid key: {key}')
-                exit(1)
-            
-            if fuzzy:
-                query = query.filter(OMIM_DATA.__dict__[key].like(value))
-            else:
-                query = query.filter(OMIM_DATA.__dict__[key] == value)
+        with manager:
+            query = manager.session.query(OMIM_DATA)
 
-        if kwargs['count']:
-            logger.info(f'{query.count()} results found for your input!')
-            exit(0)
+            for key, value in search:
+                if key not in OMIM_DATA.__dict__:
+                    logger.error(f'invalid key: {key}')
+                    exit(1)
 
-        if limit:
-            query = query.limit(limit)
+                if fuzzy:
+                    query = query.filter(OMIM_DATA.__dict__[key].like(value))
+                else:
+                    query = query.filter(OMIM_DATA.__dict__[key] == value)
 
-    if not query.count():
-        logger.warning(f'no result for your input! [{search}]')
-    else:
-        with out:
+            if kwargs['count']:
+                logger.info(f'{query.count()} results found for your input!')
+                exit(0)
+
+            if limit:
+                query = query.limit(limit)
+
+            results = query.all()
+
+        if not results:
+            logger.warning(f'no result for your input! [{search}]')
+        else:
             if kwargs['format'] == 'json':
                 data = []
-                for each in query.all():
+                for each in results:
                     context = {}
                     for k, v in each.as_dict.items():
-                        if v:
+                        if v is not None:
                             if k in ('geneMap', 'phenotypeMap', 'text_sections',
                                      'clinical_synopsis', 'external_links',
                                      'gene_record', 'see_also'):
@@ -97,7 +104,7 @@ def main(ctx, **kwargs):
                     data = highlight(data, lexers.JsonLexer(), formatters.TerminalFormatter())
                 out.write(data + '\n')
             else:
-                for n, each in enumerate(query.all()):
+                for n, each in enumerate(results):
                     context = each.as_dict
                     if n == 0:
                         title = '\t'.join(context.keys())
@@ -106,6 +113,9 @@ def main(ctx, **kwargs):
                         v.strftime('%Y-%m-%d') if isinstance(v, datetime.datetime) else str(v)
                         for v in context.values()])
                     out.write(line + '\n')
+    finally:
+        if kwargs['outfile'] and out and out != sys.stdout:
+            out.close()
 
 
 if __name__ == '__main__':

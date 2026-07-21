@@ -7,6 +7,28 @@ from omim_cli.db.model import Base, OMIM_ALLELIC_VARIANT
 from simple_loggers import SimpleLogger
 
 
+# Whitelist for migration: allowed table and column names.
+# Prevents SQL injection via crafted identifiers (defense-in-depth;
+# current identifiers are all hardcoded, but this adds a safety net).
+_ALLOWED_TABLES = {
+    'omim',
+    'omim_allelic_variants',
+}
+
+_ALLOWED_COLS = {
+    'omim': {
+        'text_sections', 'clinical_synopsis', 'phenotypic_series',
+        'parser_version', 'status', 'moved_to', 'external_links',
+        'gene_record', 'see_also', 'contributors', 'edit_history',
+        'date_created', 'date_updated',
+    },
+    'omim_allelic_variants': {
+        'alternative_names', 'gnomad_snps', 'see_also',
+        'status', 'moved_to',
+    },
+}
+
+
 class Manager(object):
     """
         uri:
@@ -22,6 +44,7 @@ class Manager(object):
         self.engine = sqlalchemy.create_engine(self.uri, echo=echo)
         self.engine.logger.level = self.logger.level
         self.session = self.connect()
+        self._migrated = False
 
     def __enter__(self):
         self.create_table(drop=self.drop)
@@ -48,7 +71,13 @@ class Manager(object):
         SQLite does not support 'ADD COLUMN IF NOT EXISTS' directly, so we
         check via PRAGMA table_info and add missing columns. Handles both the
         ``omim`` and ``omim_allelic_variants`` tables across schema versions.
+
+        Runs only once per Manager lifetime (cached via ``self._migrated``).
         """
+        if self._migrated:
+            return
+        self._migrated = True
+
         schema = {
             'omim': {
                 'text_sections': 'TEXT',
@@ -76,13 +105,18 @@ class Manager(object):
 
         with self.engine.connect() as conn:
             for table, cols in schema.items():
+                if table not in _ALLOWED_TABLES:
+                    continue
                 rows = conn.execute(
                     sqlalchemy.text(f"PRAGMA table_info({table})")
                 ).fetchall()
                 existing = {row[1] for row in rows}
                 if not existing:
                     continue  # table does not exist yet; create_all handles it
+                allowed = _ALLOWED_COLS.get(table, set())
                 for col_name, col_type in cols.items():
+                    if col_name not in allowed:
+                        continue  # skip identifiers not in whitelist
                     if col_name not in existing:
                         self.logger.info(f'Migration: adding column {col_name} to {table}')
                         conn.execute(sqlalchemy.text(
@@ -95,8 +129,7 @@ class Manager(object):
         query = self.session.query(Meta)
         if key:
             if key not in Meta.__dict__:
-                self.logger.warning(f'unavailable key: {key}')
-                return None
+                raise ValueError(f'unavailable key: {key}')
 
             if fuzzy:
                 query = query.filter(Meta.__dict__[key].like(value))

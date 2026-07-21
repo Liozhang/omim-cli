@@ -4,7 +4,10 @@ import json
 
 HOME = os.path.expanduser('~')
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-version_info = json.load(open(os.path.join(BASE_DIR, 'version', 'version.json')))
+
+_version_path = os.path.join(BASE_DIR, 'version', 'version.json')
+with open(_version_path, encoding='utf-8') as f:
+    version_info = json.load(f)
 
 __version__ = version_info['version']
 
