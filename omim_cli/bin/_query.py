@@ -92,7 +92,11 @@ def main(ctx, **kwargs):
                             if k in ('geneMap', 'phenotypeMap', 'text_sections',
                                      'clinical_synopsis', 'external_links',
                                      'gene_record', 'see_also'):
-                                v = json.loads(v)
+                                if isinstance(v, str):
+                                    v = json.loads(v)
+                                else:
+                                    self.logger.warning(
+                                        f'unexpected type for {k}: {type(v).__name__}')
                             elif k in ('generated', 'date_created', 'date_updated') \
                                     and isinstance(v, datetime.datetime):
                                 v = v.strftime('%Y-%m-%d')

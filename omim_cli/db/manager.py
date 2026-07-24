@@ -57,7 +57,7 @@ class Manager(object):
         self.logger.debug('database closed.')
 
     def connect(self):
-        DBSession = sessionmaker(bind=self.engine)
+        DBSession = sessionmaker(bind=self.engine, expire_on_commit=False)
         return DBSession()
 
     def create_table(self, drop=False):
