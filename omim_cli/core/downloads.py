@@ -16,8 +16,9 @@ The same API key is used as the download token in the data.omim.org URL.
 import os
 import re
 import json
+import time
 from collections import defaultdict
-from pathlib import Path
+from email.utils import parsedate_to_datetime
 
 import requests
 from simple_loggers import SimpleLogger
@@ -51,6 +52,10 @@ PREFIX_MAP = {
 _PHENO_TAIL_RE = re.compile(
     r'(?:,\s*(?P<mim>\d{6}))?\s*\((?P<key>\d)\)(?:,\s*(?P<inh>.+?))?\s*$'
 )
+
+
+class CheckFailed(Exception):
+    """Raised when a remote check or download fails after all retries."""
 
 
 class OmimDownloads(object):
@@ -102,34 +107,101 @@ class OmimDownloads(object):
             self.logger.warning(f'cannot read local {name}: {exc}')
             return None
 
+    @staticmethod
+    def _parse_http_date(date_str):
+        """Parse an HTTP-date string (Last-Modified) to a Unix timestamp."""
+        try:
+            return parsedate_to_datetime(date_str).timestamp()
+        except (TypeError, ValueError, OverflowError):
+            return None
+
+    def _get_with_retry(self, url, name):
+        """GET stream with one retry on 429. Raises CheckFailed if still 429."""
+        resp = self.session.get(url, stream=True, timeout=self.timeout)
+        if resp.status_code == 429:
+            self.logger.warning(
+                f'rate limited accessing {name} (429); backing off 10s ...'
+            )
+            time.sleep(10)
+            resp = self.session.get(url, stream=True, timeout=self.timeout)
+        if resp.status_code == 429:
+            raise CheckFailed(
+                f'OMIM rate limit still active for {name} after retry; '
+                f'wait and re-run later. You can download manually: {url}'
+            )
+        return resp
+
     def remote_generated(self, name):
         url = self.file_url(name)
         try:
-            resp = self.session.get(url, stream=True, timeout=self.timeout)
+            # Fast path: HEAD request to avoid downloading the file body
+            path = self.local_path(name)
+            if os.path.isfile(path):
+                try:
+                    head_resp = self.session.head(url, timeout=self.timeout)
+                    if head_resp.status_code == 200:
+                        last_modified = head_resp.headers.get('Last-Modified')
+                        if last_modified:
+                            remote_time = self._parse_http_date(last_modified)
+                            local_mtime = os.path.getmtime(path)
+                            if remote_time and remote_time <= local_mtime:
+                                self.logger.debug(f'{name}: not modified (HEAD)')
+                                return None  # Up to date
+                    # HEAD returned non-200 (e.g. 429); fall through to GET
+                except Exception:
+                    pass  # HEAD not supported or network error; fall through
+
+            # GET with 429 retry
+            resp = self._get_with_retry(url, name)
             if resp.status_code != 200:
-                self.logger.warning(f'cannot check remote {name}: HTTP {resp.status_code}')
+                self.logger.warning(
+                    f'cannot check remote {name}: HTTP {resp.status_code}\n'
+                    f'  You can download manually: {url}'
+                )
                 return None
             return self._generated_from_text(resp.iter_lines())
+        except CheckFailed:
+            raise  # Let check_updates / download handle this
         except Exception as exc:
             self.logger.warning(f'cannot check remote {name}: {exc}')
             return None
 
     def check_updates(self, names=None):
-        """Return list of file names that are missing or newer on the server."""
-        import time
+        """Return (need, failed) — files to download and files whose check failed."""
         names = names or list(FILES)
         need = []
-        for i, name in enumerate(names):
+        failed = []
+        for name in names:
             local = self.local_generated(name)
             if not local:
                 need.append(name)
                 continue
-            if i > 0:
-                time.sleep(1)  # be polite to the download host
-            remote = self.remote_generated(name)
+            time.sleep(1)  # Be polite before every request
+            try:
+                remote = self.remote_generated(name)
+            except CheckFailed as exc:
+                self.logger.warning(str(exc))
+                failed.append(name)
+                continue
             if remote and remote != local:
                 need.append(name)
-        return need
+        return need, failed
+
+    def _download_with_retry(self, url, name):
+        """GET for download with one retry on 429. Raises CheckFailed if still 429."""
+        resp = self.session.get(url, stream=True, timeout=self.timeout)
+        if resp.status_code == 429:
+            self.logger.warning(
+                f'rate limited downloading {name} (429); backing off 10s ...'
+            )
+            time.sleep(10)
+            resp = self.session.get(url, stream=True, timeout=self.timeout)
+        if resp.status_code == 429:
+            raise CheckFailed(
+                f'OMIM rate limit still active downloading {name} after retry; '
+                f'wait and re-run later. You can download manually: {url}'
+            )
+        return resp
 
     # ------------------------------------------------------------------
     # download
@@ -140,15 +212,22 @@ class OmimDownloads(object):
         if force:
             need = list(names)
         else:
-            need = self.check_updates(names)
+            need, failed = self.check_updates(names)
+            if failed:
+                self.logger.warning(f'could not check: {failed}')
         downloaded = []
         for name in need:
             url = self.file_url(name)
             path = self.local_path(name)
             self.logger.info(f'downloading {name} -> {path}')
-            resp = self.session.get(url, stream=True, timeout=self.timeout)
+            try:
+                resp = self._download_with_retry(url, name)
+            except CheckFailed as exc:
+                self.logger.error(str(exc))
+                continue
             if resp.status_code != 200:
-                self.logger.error(f'failed {name}: HTTP {resp.status_code} {resp.text[:120]}')
+                self.logger.error(f'failed {name}: HTTP {resp.status_code}\n'
+                                  f'  You can download manually: {url}')
                 continue
             with open(path, 'wb') as out:
                 for chunk in resp.iter_content(chunk_size=65536):

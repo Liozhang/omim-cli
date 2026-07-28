@@ -42,9 +42,18 @@ def main(ctx, api_key, outdir, force, names):
     if force:
         downloaded = dl.download(requested, force=True)
     else:
-        need = dl.check_updates(requested)
+        need, failed = dl.check_updates(requested)
+        if failed:
+            click.secho(f'could not check: {failed}', fg='red')
         if not need:
-            click.secho('all requested files are up to date', fg='green')
+            if not failed:
+                click.secho('all requested files are up to date', fg='green')
+            else:
+                click.secho(
+                    f'successfully checked files are up to date '
+                    f'({len(requested) - len(failed)}/{len(requested)})',
+                    fg='yellow'
+                )
         else:
             click.secho(f'updates available: {need}', fg='yellow')
             downloaded = dl.download(need)
