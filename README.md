@@ -9,6 +9,8 @@
 
 # omim-cli — client for OMIM (Online Mendelian Inheritance in Man)
 
+omim-cli is an open-source Python client for OMIM (Online Mendelian Inheritance in Man). It downloads the official text files ( mim2gene.txt ,  mimTitles.txt ,  genemap2.txt ,  morbidmap.txt ) and uses the OMIM REST API with an API key to retrieve detailed entries, including text sections, clinical synopsis, and allelic variants. All data is parsed and stored locally in SQLite, enabling fast, offline, and scriptable queries for genes, phenotypes, MIM numbers, and variant annotations. The tool emphasizes compliance, incremental updates, and rate-limit-friendly behavior, making it suitable for WES/WGS variant interpretation pipelines, gene–phenotype analysis, and clinical-genetics research.
+
 ## Installation
 ```bash
 pip install -U omim-cli
